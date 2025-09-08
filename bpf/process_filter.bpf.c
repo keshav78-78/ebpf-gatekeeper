@@ -26,7 +26,6 @@ int BPF_KPROBE(trace_tcp_connect)
     return 0;
 }
 
-/* Parse IPv4 + TCP headers from skb and return dest port, or 0 on error/not TCP */
 static __always_inline u16 parse_ipv4_tcp_dest_port(struct __sk_buff *skb)
 {
     void *data = (void *)(long)skb->data;
