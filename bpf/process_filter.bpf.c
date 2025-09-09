@@ -1,4 +1,3 @@
-// File: bpf/process_filter.bpf.c
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
@@ -16,8 +15,8 @@ struct {
     __type(value, char[TASK_COMM_LEN]);
 } pid_map SEC(".maps");
 
-SEC("kprobe/tcp_connect")
-int BPF_KPROBE(trace_tcp_connect)
+SEC("kprobe/tcp_v4_connect")
+int BPF_KPROBE(trace_tcp_v4_connect)
 {
     u32 pid = bpf_get_current_pid_tgid() >> 32;
     char comm[TASK_COMM_LEN];
@@ -34,7 +33,6 @@ static __always_inline u16 parse_ipv4_tcp_dest_port(struct __sk_buff *skb)
     struct iphdr *iph = data;
     if ((void *)(iph + 1) > data_end)
         return 0;
-
     if (iph->version != 4)
         return 0;
 
@@ -56,16 +54,19 @@ int filter_egress(struct __sk_buff *skb)
     u32 pid = bpf_get_current_pid_tgid() >> 32;
 
     char *comm = bpf_map_lookup_elem(&pid_map, &pid);
-    if (!comm)
-        return 1;
+    if (!comm) {
+        return 1; // unknown -> allow
+    }
 
-    char target_comm[TASK_COMM_LEN] = "myprocess";
+    char target_comm[TASK_COMM_LEN] = "bash"; // set to the kernel comm you want to match
     int i;
     for (i = 0; i < TASK_COMM_LEN; i++) {
-        if (comm[i] != target_comm[i])
+        if (comm[i] != target_comm[i]) {
             return 1;
-        if (comm[i] == '\0')
+        }
+        if (comm[i] == '\0') {
             break;
+        }
     }
 
     u16 dest_port = parse_ipv4_tcp_dest_port(skb);
@@ -73,10 +74,10 @@ int filter_egress(struct __sk_buff *skb)
         return 1;
 
     if (dest_port != TARGET_PORT) {
-        bpf_printk("Dropping packet from PID %d to port %d\n", pid, dest_port);
+        bpf_printk("Dropping packet from PID %d (%s) to port %d\n", pid, comm, dest_port);
         return 0;
     }
 
-    bpf_printk("Allowing packet from PID %d to port %d\n", pid, dest_port);
+    bpf_printk("Allowing packet from PID %d (%s) to port %d\n", pid, comm, dest_port);
     return 1;
 }

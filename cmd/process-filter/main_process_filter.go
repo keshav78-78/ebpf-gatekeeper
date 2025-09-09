@@ -102,7 +102,7 @@ func main() {
 	}
 	defer objs.Close()
 
-	kp, err := link.Kprobe("tcp_connect", objs.TraceTcpConnect, nil)
+	kp, err := link.Kprobe("tcp_v4_connect", objs.TraceTcpV4Connect, nil)
 	if err != nil {
 		log.Fatalf("Attaching kprobe: %v", err)
 	}

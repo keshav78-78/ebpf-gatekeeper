@@ -54,8 +54,8 @@ type bpfSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfProgramSpecs struct {
-	FilterEgress    *ebpf.ProgramSpec `ebpf:"filter_egress"`
-	TraceTcpConnect *ebpf.ProgramSpec `ebpf:"trace_tcp_connect"`
+	FilterEgress      *ebpf.ProgramSpec `ebpf:"filter_egress"`
+	TraceTcpV4Connect *ebpf.ProgramSpec `ebpf:"trace_tcp_v4_connect"`
 }
 
 // bpfMapSpecs contains maps before they are loaded into the kernel.
@@ -110,14 +110,14 @@ type bpfVariables struct {
 //
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfPrograms struct {
-	FilterEgress    *ebpf.Program `ebpf:"filter_egress"`
-	TraceTcpConnect *ebpf.Program `ebpf:"trace_tcp_connect"`
+	FilterEgress      *ebpf.Program `ebpf:"filter_egress"`
+	TraceTcpV4Connect *ebpf.Program `ebpf:"trace_tcp_v4_connect"`
 }
 
 func (p *bpfPrograms) Close() error {
 	return _BpfClose(
 		p.FilterEgress,
-		p.TraceTcpConnect,
+		p.TraceTcpV4Connect,
 	)
 }
 
